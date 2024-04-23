@@ -3,8 +3,7 @@ import torch
 from onediff.infer_compiler.deployable_module import DeployableModule
 from onediff.infer_compiler.utils.log_utils import logger
 from .model_compiler import compile_model_part, _recursive_getattr
-
-# from multiprocessing import Pool, set_start_method
+from multiprocessing import Pool
 # set_start_method('spawn')
 
 
