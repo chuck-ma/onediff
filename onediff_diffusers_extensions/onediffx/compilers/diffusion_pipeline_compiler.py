@@ -1,17 +1,10 @@
 import os
 import torch
-from onediff.infer_compiler import oneflow_compile
 from onediff.infer_compiler.deployable_module import DeployableModule
 from onediff.infer_compiler.utils.log_utils import logger
-
-
-def _recursive_getattr(obj, attr, default=None):
-    attrs = attr.split(".")
-    for attr in attrs:
-        if not hasattr(obj, attr):
-            return default
-        obj = getattr(obj, attr, default)
-    return obj
+from multiprocessing import Pool, set_start_method
+from .model_compiler import compile_model_part, _recursive_getattr
+set_start_method('spawn')
 
 
 def _recursive_setattr(obj, attr, value):
@@ -63,11 +56,17 @@ def compile_pipe(
         pipe.upcast_vae()
 
     filtered_parts = _filter_parts(ignores=ignores)
-    for part in filtered_parts:
-        obj = _recursive_getattr(pipe, part, None)
-        if obj is not None:
-            logger.info(f"Compiling {part}")
-            _recursive_setattr(pipe, part, oneflow_compile(obj))
+
+    parts_to_compile = [(pipe, part) for part in filtered_parts]
+
+    # 使用 Pool 来并行编译模型的不同部分
+    with Pool(processes=5) as pool:
+        compiled_parts = pool.map(compile_model_part, parts_to_compile)
+
+    # 更新模型的编译部分
+    for part, compiled_obj in compiled_parts:
+        if compiled_obj is not None:
+            _recursive_setattr(pipe, part, compiled_obj)
 
     if hasattr(pipe, "image_processor") and "image_processor" not in ignores:
         logger.info("Patching image_processor")
