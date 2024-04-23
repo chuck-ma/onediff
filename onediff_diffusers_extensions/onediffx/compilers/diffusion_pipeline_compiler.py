@@ -2,9 +2,10 @@ import os
 import torch
 from onediff.infer_compiler.deployable_module import DeployableModule
 from onediff.infer_compiler.utils.log_utils import logger
-from multiprocessing import Pool, set_start_method
 from .model_compiler import compile_model_part, _recursive_getattr
-set_start_method('spawn')
+
+# from multiprocessing import Pool, set_start_method
+# set_start_method('spawn')
 
 
 def _recursive_setattr(obj, attr, value):
