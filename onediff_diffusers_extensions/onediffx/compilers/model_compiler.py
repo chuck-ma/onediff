@@ -1,6 +1,7 @@
 
 
-from onediff.infer_compiler.utils.log_utils import logger
+from loguru import logger
+
 from onediff.infer_compiler import oneflow_compile
 
 
