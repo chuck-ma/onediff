@@ -23,11 +23,9 @@ def compile_part(obj):
 
 
 def compile_model_part(args):
-    pipe, part = args
+    part, obj = args
     logger.debug(f"Compiling:{part}")
-    obj = _recursive_getattr(pipe, part, None)
     if obj is not None:
-        obj.share_memory()  # 共享内存
         compiled_obj = compile_part(obj)
         return part, compiled_obj
     return part, None

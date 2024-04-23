@@ -47,7 +47,6 @@ def _filter_parts(ignores=()):
 def compile_pipe(
     pipe, *, ignores=(),
 ):
-    # To fix the bug of graph load of vae. Please refer to: https://github.com/siliconflow/onediff/issues/452
     if (
         hasattr(pipe, "upcast_vae")
         and pipe.vae.dtype == torch.float16
@@ -56,8 +55,14 @@ def compile_pipe(
         pipe.upcast_vae()
 
     filtered_parts = _filter_parts(ignores=ignores)
+    parts_to_compile = []
 
-    parts_to_compile = [(pipe, part) for part in filtered_parts]
+    for part in filtered_parts:
+        obj = _recursive_getattr(pipe, part, None)
+        if obj is not None:
+            logger.info(f"Compiling {part}")
+            obj.share_memory()
+            parts_to_compile.append((part, obj))
 
     # 使用 Pool 来并行编译模型的不同部分
     with Pool(processes=5) as pool:
